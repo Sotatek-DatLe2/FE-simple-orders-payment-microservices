@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "target": "es2020",
+        "moduleResolution": "node",
+        "strict": true,
+        "jsx": "react",
+        "esModuleInterop": true,
+        "baseUrl": "./",
+        "paths": {
+            "src/*": [
+                "./src/*"
+            ]
+        }
+    }
+}
