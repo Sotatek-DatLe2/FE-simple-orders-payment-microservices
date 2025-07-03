@@ -10,7 +10,6 @@ const { api } = API_URL
 const ordersService = {
   getOrders({
     page = 1,
-    search = '',
     status = '',
     startDate = '',
     endDate = '',
@@ -21,7 +20,6 @@ const ordersService = {
       headers: getAuthorizationHeader(),
       params: {
         page,
-        search,
         status,
         startDate,
         endDate,

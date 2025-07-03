@@ -2,51 +2,10 @@ import React, { useState } from 'react'
 import { Table, Tag, Empty, Modal, message, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { OrderTableProps } from 'src/types'
-import styled from 'styled-components'
 import { InfoCircleTwoTone, DeleteTwoTone } from '@ant-design/icons'
 import ordersService from 'src/service/Home'
 import { AxiosResponse } from 'axios'
-import { notification } from 'antd'
 import CustomNotification from './customNoti'
-
-const EmptyContainer = styled.div`
-  text-align: center;
-  padding: 24px;
-`
-
-const TableContainer = styled.div`
-  padding: 24px;
-  position: relative;
-`
-
-const InfoIcon = styled(InfoCircleTwoTone)`
-  font-size: 20px;
-  color: #1890ff;
-  cursor: pointer;
-  transition: color 0.3s;
-
-  &:hover {
-    color: #40a9ff;
-  }
-`
-
-const DeleteIcon = styled(DeleteTwoTone)`
-  font-size: 20px;
-  color: #ff4d4f;
-  cursor: pointer;
-  transition: color 0.3s;
-  margin-left: 8px;
-
-  &:hover {
-    color: #ff7875;
-  }
-`
-
-const ActionGroup = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`
 
 const handleCancelOrder = async (
   orderId: string,
@@ -98,15 +57,16 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <ActionGroup>
+        <span className="flex items-center gap-2">
           <a href={`/order/${record.orderId}`}>
             <Tooltip title="View Details">
-              <InfoIcon />
+              <InfoCircleTwoTone className="text-xl text-blue-500 cursor-pointer hover:text-blue-400" />
             </Tooltip>
           </a>
           {record.state === 'confirmed' && (
             <Tooltip title="Cancel Order">
-              <DeleteIcon
+              <DeleteTwoTone
+                className="text-xl text-red-500 cursor-pointer hover:text-red-400"
                 onClick={() =>
                   handleCancelOrder(
                     record.orderId,
@@ -117,7 +77,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
               />
             </Tooltip>
           )}
-        </ActionGroup>
+        </span>
       ),
     },
   ]
@@ -129,7 +89,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
       if (cancelResponse.status === 200) {
         console.log(`Order ${cancelOrderId} cancelled successfully`)
         setNotification({ message: `Order ${cancelOrderId} cancelled successfully`, type: 'success' })
-        setTimeout(() => setNotification(null), 3000) // Hide after 3 seconds
+        setTimeout(() => setNotification(null), 3000)
         setRefresh && setRefresh(!refresh)
         onCancelSuccess?.()
       } else {
@@ -150,16 +110,16 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
   }
 
   return (
-    <TableContainer>
+    <div className="p-6 relative">
       <Table columns={columns} dataSource={orders} rowKey="orderId" pagination={false} loading={loading} />
-      {!orders || orders.length === 0 ? (
-        <EmptyContainer>
+      {(!orders || orders.length === 0) && (
+        <div className="text-center py-6">
           <Empty description="No orders found" />
-        </EmptyContainer>
-      ) : null}
+        </div>
+      )}
       <Modal
         title="Confirm Cancellation"
-        open={!!cancelOrderId} // convert from string to boolean
+        open={!!cancelOrderId}
         onOk={handleOk}
         onCancel={handleCancel}
         okText="Yes"
@@ -169,7 +129,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
         <p>This action cannot be undone.</p>
       </Modal>
       {notification && <CustomNotification message={notification.message} type={notification.type} />}
-    </TableContainer>
+    </div>
   )
 }
 
