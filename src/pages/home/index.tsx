@@ -1,125 +1,21 @@
 import React, { useEffect, useState } from 'react'
-import styled from 'styled-components'
 import { useDispatch } from 'react-redux'
-import { Input, Select, Layout, DatePicker, Modal, Form, InputNumber, Button, message, Space, Typography } from 'antd'
+import { Layout, Modal, Form } from 'antd'
 import { Dayjs } from 'dayjs'
 import { hideLoading, showLoading } from 'src/stores/loading.store'
 import HeaderComp from 'src/components/header'
 import SidebarComp from 'src/components/sidebar'
-import { ListOrders, NewOrder, Order } from 'src/types'
+import { ListOrders, NewOrder } from 'src/types'
 import ordersService from 'src/service/Home'
 import { AxiosResponse } from 'axios'
 import OrderTable from 'src/components/orderTables'
 import CreateOrderForm from 'src/components/newOrderForm'
 import CustomNotification from 'src/components/customNoti'
+import { localStorageService, syncWithServer } from 'src/utils/localStorageService'
+import { OrderFilter } from 'src/components/orderFilter'
 
 const { Content } = Layout
-// const { Search } = Input
-const { Option } = Select
-const { RangePicker } = DatePicker
 
-const HomeContainer = styled(Layout)`
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: row;
-`
-
-const MainContent = styled(Content)`
-  overflow-y: auto;
-  background-color: #f8f9fa;
-  padding: 24px;
-  gap: 16px;
-`
-
-const FilterContainer = styled.div`
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-`
-
-const CreateOrderButton = styled.button`
-  padding: 8px 16px;
-  margin: 16px 0;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background-color: #218838;
-  }
-`
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin: 16px 0px;
-  gap: 8px;
-  align-items: center;
-`
-
-const PaginationButton = styled.button`
-  padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  &:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-  }
-`
-
-interface PageNumberProps {
-  active: boolean
-}
-
-const PageNumber = styled.span<PageNumberProps>`
-  padding: 8px 12px;
-  background-color: ${(props) => (props.active ? '#007bff' : 'white')};
-  color: ${(props) => (props.active ? 'white' : '#007bff')};
-  border: 1px solid #007bff;
-  border-radius: 4px;
-  cursor: pointer;
-`
-
-interface OrderFilterProps {
-  onSearch: (value: string) => void
-  onStatusFilter: (value: string) => void
-  onDateFilter: (dates: [Dayjs | null, Dayjs | null] | null) => void
-  onSortChange: (sortBy: string, sortOrder: string) => void
-}
-
-const OrderFilter: React.FC<OrderFilterProps> = ({ onSearch, onStatusFilter, onDateFilter, onSortChange }) => (
-  <FilterContainer>
-    {/* <StyledSearch placeholder="Search by Order ID" onSearch={onSearch} enterButton /> */}
-    <Select style={{ width: 200 }} placeholder="Filter by status" onChange={onStatusFilter} allowClear>
-      <Option value="delivered">Delivered</Option>
-      <Option value="cancelled">Cancelled</Option>
-    </Select>
-    <RangePicker onChange={onDateFilter} format="YYYY-MM-DD" style={{ width: 300 }} />
-    <Select
-      style={{ width: 200 }}
-      placeholder="Sort by"
-      onChange={(value) => {
-        const [sortBy, sortOrder] = value.split(':')
-        onSortChange(sortBy, sortOrder)
-      }}
-      allowClear
-      defaultValue={'createdAt:DESC'}
-    >
-      <Option value="createdAt:ASC">Date: Ascending</Option>
-      <Option value="createdAt:DESC">Date: Descbing</Option>
-      <Option value="totalAmount:ASC">Price: Ascending</Option>
-      <Option value="totalAmount:DESC">Price: Descending</Option>
-    </Select>
-  </FilterContainer>
-)
-
-// Mock product data
 const mockProducts = [
   { productId: 'prod1', name: 'Laptop', price: 999.99 },
   { productId: 'prod2', name: 'Smartphone', price: 499.99 },
@@ -130,7 +26,7 @@ const mockProducts = [
 const Home: React.FC = () => {
   const dispatch = useDispatch()
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false)
-  const [orders, setOrders] = useState<ListOrders[]>([])
+  const [orders, setOrders] = useState<ListOrders[]>(localStorageService.getOrders())
   const [showNewOrderModal, setShowNewOrderModal] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [page, setPage] = useState<number>(1)
@@ -150,6 +46,8 @@ const Home: React.FC = () => {
     sortOrder: 'DESC',
   })
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
 
   const fetchOrders = async (currentPage: number = 1) => {
     try {
@@ -162,15 +60,13 @@ const Home: React.FC = () => {
         totalPages: number
       }> = await ordersService.getOrders({
         page: currentPage,
-        search: filters.search || '',
         status: filters.status || '',
         startDate: filters.startDate || '',
         endDate: filters.endDate || '',
         sortBy: filters.sortBy || 'createdAt',
         sortOrder: filters.sortOrder || 'DESC',
       })
-      const data = Array.isArray(response.data.data) ? response.data.data : []
-      setOrders(data)
+      setOrders(Array.isArray(response.data.data) ? response.data.data : [])
       setPage(response.data.page)
       setTotalPages(response.data.totalPages)
     } catch (error) {
@@ -196,7 +92,7 @@ const Home: React.FC = () => {
   }
 
   const handleDateFilter = (dates: [Dayjs | null, Dayjs | null] | null) => {
-    if (dates && dates[0] !== null && dates[1] !== null) {
+    if (dates && dates[0] && dates[1]) {
       setFilters((prev) => ({
         ...prev,
         startDate: dates[0] ? dates[0].format('YYYY-MM-DD') : undefined,
@@ -226,85 +122,120 @@ const Home: React.FC = () => {
     try {
       setLoading(true)
       dispatch(showLoading())
-      const order: Pick<NewOrder, 'userId' | 'totalAmount'> = {
-        userId: newOrder.userId,
-        totalAmount: newOrder.totalAmount,
-      }
-      console.log('Creating order with values:', order)
-      const response: AxiosResponse<Order> = await ordersService.createOrder(order)
+      const order = { userId: newOrder.userId, totalAmount: newOrder.totalAmount }
+      const response: AxiosResponse<any> = await ordersService.createOrder(order)
       if (response.data) {
-        setNotification({ message: `Order ${response.data.orderId} created successfully`, type: 'success' })
-        setTimeout(() => setNotification(null), 2000) // Hide after 2 seconds
+        setNotification({ message: `Order ${response.data.order.orderId} created successfully`, type: 'success' })
+        setTimeout(() => setNotification(null), 2000)
         setShowNewOrderModal(false)
         form.resetFields()
-        console.log('Order created:', response.data)
         setRefresh(!refresh)
         fetchOrders(page)
       }
     } catch (error) {
       console.error('Error creating order:', error)
       setNotification({ message: 'Failed to create order. Please try again.', type: 'error' })
-      setTimeout(() => setNotification(null), 2000) // Hide after 2 seconds
+      setTimeout(() => setNotification(null), 2000)
     } finally {
       setLoading(false)
       dispatch(hideLoading())
     }
   }
 
-  const handleShowNewOrderModal = () => {
-    setShowNewOrderModal(true)
-  }
-
+  const handleShowNewOrderModal = () => setShowNewOrderModal(true)
   const handleCancelModal = () => {
     setShowNewOrderModal(false)
     form.resetFields()
   }
 
-  // Calculate totalAmount based on items
   const calculateTotalAmount = () => {
     const items = form.getFieldValue('items') || []
     const total = items.reduce((sum: number, item: { productId: string; quantity: number }) => {
       const product = mockProducts.find((p) => p.productId === item.productId)
       return sum + (product ? product.price * item.quantity : 0)
     }, 0)
-    console.log('Calculated total amount:', total)
     form.setFieldsValue({ totalAmount: total })
     setNewOrder((prev) => ({ ...prev, totalAmount: total }))
   }
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true)
+      syncWithServer({ orders, setOrders, setSyncStatus, dispatch, page, filters })
+    }
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [orders, setOrders, setSyncStatus, dispatch, page, filters])
 
   useEffect(() => {
     fetchOrders()
   }, [filters, refresh])
 
   return (
-    <HomeContainer>
+    <Layout className="flex flex-row h-screen overflow-hidden">
       <SidebarComp sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <Layout>
-        <HeaderComp setSidebarOpen={setSidebarOpen} />
-        <MainContent>
-          <CreateOrderButton onClick={handleShowNewOrderModal}>+ Create Order</CreateOrderButton>
+      <Layout className="flex flex-col flex-1">
+        <HeaderComp />
+        <Content className="flex-1 overflow-y-auto bg-gray-100 p-6 gap-4">
+          <div className="flex justify-between items-center mb-4">
+            <button
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={handleShowNewOrderModal}
+            >
+              + Create Order
+            </button>
+            <div className="flex items-center gap-2">
+              <span className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span>{isOnline ? 'Online' : 'Offline'}</span>
+              <span>{syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'synced' ? 'Synced' : ''}</span>
+            </div>
+          </div>
+
           <OrderFilter
             onSearch={handleSearch}
             onStatusFilter={handleStatusFilter}
             onDateFilter={handleDateFilter}
             onSortChange={handleSortChange}
           />
+
           <OrderTable orders={orders} loading={loading} refresh={refresh} setRefresh={setRefresh} />
-          <PaginationContainer>
-            <PaginationButton onClick={() => handlePageChange(page - 1)} disabled={page === 1}>
+
+          <div className="flex justify-end items-center gap-2 my-4">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled={page === 1}
+            >
               Previous
-            </PaginationButton>
+            </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-              <PageNumber key={pageNum} active={pageNum === page} onClick={() => handlePageChange(pageNum)}>
+              <span
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-3 py-2 rounded border cursor-pointer ${
+                  pageNum === page ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-600 border-blue-600'
+                }`}
+              >
                 {pageNum}
-              </PageNumber>
+              </span>
             ))}
-            <PaginationButton onClick={() => handlePageChange(page + 1)} disabled={page === totalPages}>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-gray-300 disabled:cursor-not-allowed"
+              disabled={page === totalPages}
+            >
               Next
-            </PaginationButton>
-          </PaginationContainer>
-        </MainContent>
+            </button>
+          </div>
+        </Content>
       </Layout>
+
       <Modal title="Create New Order" open={showNewOrderModal} onCancel={handleCancelModal} footer={null}>
         <CreateOrderForm
           onCancel={handleCancelModal}
@@ -314,8 +245,9 @@ const Home: React.FC = () => {
           handleCancelModal={handleCancelModal}
         />
       </Modal>
+
       {notification && <CustomNotification message={notification.message} type={notification.type} />}
-    </HomeContainer>
+    </Layout>
   )
 }
 

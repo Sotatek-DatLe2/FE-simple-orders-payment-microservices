@@ -1,14 +1,25 @@
 import moment from 'moment'
 import { Dayjs } from 'dayjs'
 
-export interface ListOrders {
-  orderId: string
+export interface NewOrder {
   userId: string
-  createdAt: string
-  state: string
+  items: { productId: string; quantity: number }[]
   totalAmount: number
+  createdAt?: string
+  updatedAt?: string
+  status?: string
+  localId?: string // Added for offline orders
+}
+
+export interface ListOrders {
+  orderId: string // Server-generated ID
+  userId: string
+  items: { productId: string; quantity: number }[]
+  totalAmount: number
+  createdAt: string
   updatedAt: string
-  cancelledAt: string | null
+  status: string
+  localId?: string // Optional for local orders before sync
 }
 
 export interface OrderHistory {
@@ -61,4 +72,10 @@ export interface OrderFilterProps {
   onSearch: (value: string) => void
   onStatusFilter: (value: string) => void
   onDateFilter: (dates: [Dayjs | null, Dayjs | null] | null) => void
+  onSortChange: (sortBy: string, sortOrder: string) => void
+}
+
+export interface CustomNotificationProps {
+  message: string
+  type: 'success' | 'error'
 }

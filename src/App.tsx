@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import Routes from 'src/routes/index.routes'
 import rootStore from './stores/root-store'
 import 'antd/dist/reset.css'
+import './App.css'
 
 export default function App() {
   return (
