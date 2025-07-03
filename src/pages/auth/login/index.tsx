@@ -389,7 +389,7 @@ const Login: React.FC = () => {
   }, [])
 
   const handleSocialLogin = useCallback((provider: string) => {
-    console.log(`Login with ${provider}`)
+    // console.log(`Login with ${provider}`)
     // Implement social login logic here
   }, [])
 
@@ -457,12 +457,12 @@ const Login: React.FC = () => {
   )
 
   const handleClose = useCallback(() => {
-    console.log('Close login modal')
+    // console.log('Close login modal')
     // Implement close logic (redirect, close modal, etc.)
   }, [])
 
   const handleSignUp = useCallback(() => {
-    console.log('Navigate to sign up')
+    // console.log('Navigate to sign up')
     window.location.href = '/sign-up'
   }, [])
 

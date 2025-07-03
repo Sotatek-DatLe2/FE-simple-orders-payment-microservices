@@ -13,7 +13,7 @@ export const useOrders = (filters: any, page: number) => {
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
       })
-      return res.data
+      return res.data.data
     },
   })
 }

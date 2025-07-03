@@ -55,7 +55,7 @@ const Home: React.FC = () => {
   })
 
   const totalPages = data?.totalPages || 1
-  const orders = data?.data || []
+  const orders = data?.orders || []
 
   const handleFilterChange = (newFilters: Partial<typeof filters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters }))
@@ -76,10 +76,14 @@ const Home: React.FC = () => {
 
   const calculateTotalAmount = useCallback(() => {
     const items = form.getFieldValue('items') || []
-    const total = items.reduce((sum: number, item: { productId: string; quantity: number }) => {
+
+    const total = items.reduce((sum: number, item: { productId?: string; quantity?: number } = {}) => {
+      if (!item || !item.productId) return sum
+
       const product = mockProducts.find((p) => p.productId === item.productId)
-      return sum + (product ? product.price * item.quantity : 0)
+      return sum + (product ? product.price * (item.quantity || 0) : 0)
     }, 0)
+
     form.setFieldsValue({ totalAmount: total })
     setNewOrder((prev) => ({ ...prev, totalAmount: total }))
   }, [form])
@@ -98,11 +102,12 @@ const Home: React.FC = () => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine)
     window.addEventListener('online', updateOnlineStatus)
     window.addEventListener('offline', updateOnlineStatus)
+
     return () => {
       window.removeEventListener('online', updateOnlineStatus)
       window.removeEventListener('offline', updateOnlineStatus)
     }
-  }, [])
+  }, [refetch])
 
   return (
     <Layout className="flex flex-row h-screen overflow-hidden">

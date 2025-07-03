@@ -13,7 +13,8 @@ export const useCreateOrder = ({
   return useMutation({
     mutationFn: (order: { userId: string; totalAmount: number }) => ordersService.createOrder(order),
     onSuccess: (response) => {
-      const orderId = response.data?.order?.orderId
+      console.log('Order created successfully:', response.data)
+      const orderId = response.data?.data.orderId
       queryClient.invalidateQueries({ queryKey: ['orders'] })
       onSuccessCallback?.(orderId)
     },

@@ -65,7 +65,7 @@ const ordersService = {
       }
     )
 
-    if (response.status !== 200) {
+    if (response.status !== 200 && response.status !== 201) {
       const error = new Error(response.data?.message || 'Order creation failed')
       throw error
     }
