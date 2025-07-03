@@ -84,10 +84,17 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
       },
     })
   }
+  // console.log('Orders:', orders)
 
   return (
     <div className="p-6 relative">
-      <Table columns={columns} dataSource={orders} rowKey="orderId" pagination={false} loading={loading || isPending} />
+      <Table
+        columns={columns}
+        dataSource={Array.isArray(orders) ? orders : []}
+        rowKey="orderId"
+        pagination={false}
+        loading={loading || isPending}
+      />
       {(!orders || orders.length === 0) && (
         <div className="text-center py-6">
           <Empty description="No orders found" />
