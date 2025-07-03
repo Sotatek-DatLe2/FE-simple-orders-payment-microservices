@@ -1,17 +1,15 @@
 import React from 'react'
 import { Form, Button, InputNumber, Space, Typography, Select } from 'antd'
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
-import { NewOrder } from 'src/types'
 
 interface OrderFormProps {
   onCancel: () => void
-  handleCancelModal: () => void
-  handleCreateOrder: (values: Omit<NewOrder, 'userId' | 'items'>) => void
+  handleCreateOrder: () => void
   form: any
   calculateTotalAmount: (changedValues: any, allValues: any) => void
+  creating: boolean
 }
 
-// Mock product data
 const mockProducts = [
   { productId: 'prod1', name: 'Laptop', price: 999.99 },
   { productId: 'prod2', name: 'Smartphone', price: 499.99 },
@@ -19,12 +17,12 @@ const mockProducts = [
   { productId: 'prod4', name: 'Mouse', price: 29.99 },
 ]
 
-export const CreateOrderForm: React.FC<OrderFormProps> = ({
+const CreateOrderForm: React.FC<OrderFormProps> = ({
   onCancel,
-  handleCancelModal,
   handleCreateOrder,
   form,
   calculateTotalAmount,
+  creating,
 }) => {
   return (
     <Form
@@ -38,8 +36,9 @@ export const CreateOrderForm: React.FC<OrderFormProps> = ({
       onValuesChange={calculateTotalAmount}
     >
       <Form.Item label="Total Amount" shouldUpdate>
-        {() => <Typography.Text>${(form.getFieldValue('totalAmount') || 0).toFixed(2)}</Typography.Text>}
+        {() => <Typography.Text>${form.getFieldValue('totalAmount')?.toFixed(2) || '0.00'}</Typography.Text>}
       </Form.Item>
+
       <Form.List name="items">
         {(fields, { add, remove }) => (
           <>
@@ -58,6 +57,7 @@ export const CreateOrderForm: React.FC<OrderFormProps> = ({
                     ))}
                   </Select>
                 </Form.Item>
+
                 <Form.Item
                   {...restField}
                   name={[name, 'quantity']}
@@ -65,6 +65,7 @@ export const CreateOrderForm: React.FC<OrderFormProps> = ({
                 >
                   <InputNumber min={1} placeholder="Quantity" />
                 </Form.Item>
+
                 {fields.length > 1 && <MinusCircleOutlined onClick={() => remove(name)} />}
               </Space>
             ))}
@@ -76,12 +77,15 @@ export const CreateOrderForm: React.FC<OrderFormProps> = ({
           </>
         )}
       </Form.List>
+
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit">
+          <Button type="primary" htmlType="submit" loading={creating} className="bg-blue-500 hover:bg-blue-600">
             Submit
           </Button>
-          <Button onClick={handleCancelModal}>Cancel</Button>
+          <Button onClick={onCancel} disabled={creating}>
+            Cancel
+          </Button>
         </Space>
       </Form.Item>
     </Form>

@@ -1,23 +1,13 @@
 import React, { useState } from 'react'
-import { Table, Tag, Empty, Modal, message, Tooltip } from 'antd'
+import { Table, Tag, Empty, Modal, Tooltip, notification } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { OrderTableProps } from 'src/types'
 import { InfoCircleTwoTone, DeleteTwoTone } from '@ant-design/icons'
-import ordersService from 'src/service/Home'
-import { AxiosResponse } from 'axios'
-import CustomNotification from './customNoti'
+import { useCancelOrder } from 'src/hooks/useCancelOrder'
 
-const handleCancelOrder = async (
-  orderId: string,
-  onSuccess: () => void,
-  setCancelOrderId: (orderId: string | null) => void
-) => {
-  setCancelOrderId(orderId)
-}
-
-const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSuccess, refresh, setRefresh }) => {
+const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSuccess }) => {
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const { mutate: cancelOrder, isPending } = useCancelOrder()
 
   const columns: ColumnsType<any> = [
     {
@@ -67,13 +57,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
             <Tooltip title="Cancel Order">
               <DeleteTwoTone
                 className="text-xl text-red-500 cursor-pointer hover:text-red-400"
-                onClick={() =>
-                  handleCancelOrder(
-                    record.orderId,
-                    onCancelSuccess || (() => console.log('No success callback')),
-                    setCancelOrderId
-                  )
-                }
+                onClick={() => setCancelOrderId(record.orderId)}
               />
             </Tooltip>
           )}
@@ -82,36 +66,28 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
     },
   ]
 
-  const handleOk = async () => {
+  const handleOk = () => {
     if (!cancelOrderId) return
-    try {
-      const cancelResponse: AxiosResponse = await ordersService.cancelOrder(cancelOrderId)
-      if (cancelResponse.status === 200) {
-        console.log(`Order ${cancelOrderId} cancelled successfully`)
-        setNotification({ message: `Order ${cancelOrderId} cancelled successfully`, type: 'success' })
-        setTimeout(() => setNotification(null), 3000)
-        setRefresh && setRefresh(!refresh)
+    cancelOrder(cancelOrderId, {
+      onSuccess: () => {
+        notification.success({
+          message: `Order ${cancelOrderId} cancelled successfully`,
+        })
+        setCancelOrderId(null)
         onCancelSuccess?.()
-      } else {
-        setNotification({ message: cancelResponse.data?.message || 'Unknown error', type: 'error' })
-        setTimeout(() => setNotification(null), 3000)
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      setNotification({ message: `Failed to cancel order: ${errorMsg}`, type: 'error' })
-      setTimeout(() => setNotification(null), 3000)
-    } finally {
-      setCancelOrderId(null)
-    }
-  }
-
-  const handleCancel = () => {
-    setCancelOrderId(null)
+      },
+      onError: () => {
+        notification.error({
+          message: 'Failed to cancel order. Please try again.',
+        })
+        setCancelOrderId(null)
+      },
+    })
   }
 
   return (
     <div className="p-6 relative">
-      <Table columns={columns} dataSource={orders} rowKey="orderId" pagination={false} loading={loading} />
+      <Table columns={columns} dataSource={orders} rowKey="orderId" pagination={false} loading={loading || isPending} />
       {(!orders || orders.length === 0) && (
         <div className="text-center py-6">
           <Empty description="No orders found" />
@@ -121,14 +97,13 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
         title="Confirm Cancellation"
         open={!!cancelOrderId}
         onOk={handleOk}
-        onCancel={handleCancel}
+        onCancel={() => setCancelOrderId(null)}
         okText="Yes"
         okType="danger"
         cancelText="No"
       >
         <p>This action cannot be undone.</p>
       </Modal>
-      {notification && <CustomNotification message={notification.message} type={notification.type} />}
     </div>
   )
 }

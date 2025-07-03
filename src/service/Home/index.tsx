@@ -2,10 +2,18 @@ import { AxiosResponse } from 'axios'
 import { get, post, put } from 'src/service/axiousClient'
 import { getAuthorizationHeader } from 'src/utils/auth'
 import { API_URL } from 'src/service'
-import create from '@ant-design/icons/lib/components/IconFont'
 import { NewOrder } from 'src/types'
 
 const { api } = API_URL
+
+interface GetOrdersParams {
+  page?: number
+  status?: string
+  startDate?: string
+  endDate?: string
+  sortBy?: string
+  sortOrder?: string
+}
 
 const ordersService = {
   getOrders({
@@ -15,7 +23,7 @@ const ordersService = {
     endDate = '',
     sortBy = '',
     sortOrder = '',
-  }): Promise<AxiosResponse> {
+  }: GetOrdersParams): Promise<AxiosResponse> {
     return get(`${api}/orders/`, {
       headers: getAuthorizationHeader(),
       params: {
@@ -28,11 +36,13 @@ const ordersService = {
       },
     })
   },
+
   getOrderById(orderId: string): Promise<AxiosResponse> {
     return get(`${api}/orders/${orderId}`, {
       headers: getAuthorizationHeader(),
     })
   },
+
   cancelOrder(orderId: string): Promise<AxiosResponse> {
     return put(
       `${api}/orders/${orderId}/cancel`,
@@ -42,8 +52,9 @@ const ordersService = {
       }
     )
   },
-  createOrder(orderData: any): Promise<AxiosResponse> {
-    return post(
+
+  async createOrder(orderData: Pick<NewOrder, 'userId' | 'totalAmount'>): Promise<AxiosResponse> {
+    const response = await post(
       `${api}/orders/`,
       {
         userId: orderData.userId,
@@ -53,6 +64,13 @@ const ordersService = {
         headers: getAuthorizationHeader(),
       }
     )
+
+    if (response.status !== 200) {
+      const error = new Error(response.data?.message || 'Order creation failed')
+      throw error
+    }
+
+    return response
   },
 }
 
