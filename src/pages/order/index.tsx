@@ -7,7 +7,7 @@ import HeaderComp from 'src/components/header'
 import SidebarComp from 'src/components/sidebar'
 import ordersService from 'src/service/Home'
 import { AxiosResponse } from 'axios'
-import { Order } from 'src/types'
+import { Order, OrderDetailResponse } from 'src/types'
 import { OrderInfo } from './components/orderInfo'
 import { OrderTimeline } from './components/orderTimeline'
 
@@ -31,9 +31,9 @@ const OrderDetail: React.FC = () => {
       setLoading(true)
       setError(null)
       dispatch(showLoading())
-      const response: AxiosResponse<Order> = await ordersService.getOrderById(orderId)
+      const response: AxiosResponse<OrderDetailResponse> = await ordersService.getOrderById(orderId)
       if (response.data) {
-        setOrder(response.data)
+        setOrder(response.data.data)
       } else {
         setError('Order not found')
       }

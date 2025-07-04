@@ -1,14 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { Layout, Modal, Form, notification } from 'antd'
+import React, { useState, useCallback } from 'react'
+import { Layout, Modal, Form, notification, message } from 'antd'
 import HeaderComp from 'src/components/header'
 import SidebarComp from 'src/components/sidebar'
 import OrderTable from 'src/components/orderTables'
 import CreateOrderForm from 'src/components/newOrderForm'
-import { onlineManager } from '@tanstack/react-query'
+// import { onlineManager } from '@tanstack/react-query'
 import { OrderFilter } from 'src/components/orderFilter'
 import { useOrders } from 'src/hooks/useQuery'
 import { useCreateOrder } from 'src/hooks/useCreateOrder'
 import { NewOrder } from 'src/types'
+import { useSocketStatus } from 'src/hooks/useSocketStatus'
 
 const { Content } = Layout
 
@@ -33,7 +34,6 @@ const Home: React.FC = () => {
   })
   const [form] = Form.useForm()
   const [newOrder, setNewOrder] = useState<NewOrder>({ userId: '1', items: [], totalAmount: 0 })
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
   const { data, isLoading, refetch } = useOrders(filters, page)
   const { mutate: createOrder, isPending: creating } = useCreateOrder({
     onSuccessCallback: (orderId) => {
@@ -54,6 +54,22 @@ const Home: React.FC = () => {
     },
   })
 
+  const resendPendingOrders = () => {
+    console.log('Resending pending orders...')
+    const pending = JSON.parse(localStorage.getItem('PENDING_ORDERS') || '[]')
+    if (pending.length === 0) return
+    pending.forEach((order: { userId: string; totalAmount: number }) => {
+      createOrder(order, {
+        onSettled: () => {
+          console.log('Resent pending order:', order)
+        },
+      })
+    })
+
+    localStorage.removeItem('PENDING_ORDERS')
+  }
+
+  const isConnected = useSocketStatus({ onReconnect: resendPendingOrders })
   const totalPages = data?.totalPages || 1
   const orders = data?.orders || []
 
@@ -89,25 +105,25 @@ const Home: React.FC = () => {
   }, [form])
 
   const handleCreateOrder = () => {
-    createOrder(
-      { userId: newOrder.userId, totalAmount: newOrder.totalAmount },
-      {
-        onSettled: () => refetch(),
-      }
-    )
-  }
+    const orderData = { userId: newOrder.userId, totalAmount: newOrder.totalAmount }
 
-  useEffect(() => {
-    onlineManager.setOnline(navigator.onLine)
-    const updateOnlineStatus = () => setIsOnline(navigator.onLine)
-    window.addEventListener('online', updateOnlineStatus)
-    window.addEventListener('offline', updateOnlineStatus)
-
-    return () => {
-      window.removeEventListener('online', updateOnlineStatus)
-      window.removeEventListener('offline', updateOnlineStatus)
+    if (!isConnected) {
+      const pending = JSON.parse(localStorage.getItem('PENDING_ORDERS') || '[]')
+      pending.push(orderData)
+      localStorage.setItem('PENDING_ORDERS', JSON.stringify(pending))
+      notification.info({
+        message: 'Order saved locally',
+        description: 'Your order will be sent when connection is restored.',
+      })
+      setShowNewOrderModal(false)
+      form.resetFields()
+      return
     }
-  }, [refetch])
+
+    createOrder(orderData, {
+      onSettled: () => refetch(),
+    })
+  }
 
   return (
     <Layout className="flex flex-row h-screen overflow-hidden">
@@ -123,8 +139,8 @@ const Home: React.FC = () => {
               + Create Order
             </button>
             <div className="flex items-center gap-2">
-              <span className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span>{isOnline ? 'Online' : 'Offline'}</span>
+              <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span>{isConnected ? 'Online' : 'Offline'}</span>
             </div>
           </div>
 
