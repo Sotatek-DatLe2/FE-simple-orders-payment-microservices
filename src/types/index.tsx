@@ -36,6 +36,12 @@ export interface NewOrder {
   items: { productId: string; quantity: number }[]
 }
 
+export interface OrderDetailResponse {
+  data: any
+  message: string
+  success: boolean
+}
+
 export interface Order {
   orderId: string
   userId: string
