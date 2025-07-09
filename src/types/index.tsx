@@ -1,19 +1,9 @@
 import moment from 'moment'
 import { Dayjs } from 'dayjs'
 
-export interface NewOrder {
-  userId: string
-  items: { productId: string; quantity: number }[]
-  totalAmount: number
-  createdAt?: string
-  updatedAt?: string
-  status?: string
-  localId?: string // Added for offline orders
-}
-
 export interface ListOrders {
-  orderId: string // Server-generated ID
-  userId: string
+  id: string // Server-generated ID
+  customerName: string
   items: { productId: string; quantity: number }[]
   totalAmount: number
   createdAt: string
@@ -23,30 +13,41 @@ export interface ListOrders {
 }
 
 export interface OrderHistory {
+  status: string;
   id: string
   orderId: string
-  state: string
   previousState: string | null
   createdAt: string
 }
 
-export interface NewOrder {
-  userId: string
-  totalAmount: number
-  items: { productId: string; quantity: number }[]
+export interface PaymentDetails {
+  cardNumber: string;
+  expirationDate: string;
+  cvv: string;
 }
 
+export interface NewOrder {
+  customerName: string
+  totalAmount: number
+  paymentDetails: PaymentDetails
+  items: { productId: string; quantity: number }[]
+  localId?: string; // Optional for local orders before sync
+}
+
+
+
 export interface OrderDetailResponse {
-  data: any
-  message: string
-  success: boolean
+  data: {
+    order: Order
+    history: OrderHistory[]
+  }
 }
 
 export interface Order {
-  orderId: string
-  userId: string
+  id: string
+  customerName: string
   createdAt: string
-  state: string
+  status: string
   totalAmount: number
   updatedAt: string
   cancelledAt: string | null
@@ -84,4 +85,27 @@ export interface OrderFilterProps {
 export interface CustomNotificationProps {
   message: string
   type: 'success' | 'error'
+}
+
+export interface OrderFilters {
+  status: string
+  startDate: string
+  endDate: string
+  search: string
+  sortBy: string
+  sortOrder: string
+}
+
+export interface PendingOrdersService {
+  getPendingOrders: () => NewOrder[]
+  savePendingOrder: (order: NewOrder) => void
+  clearPendingOrders: () => void
+}
+
+export interface OrderFormProps {
+  onCancel: () => void
+  handleCreateOrder: () => void
+  form: any
+  calculateTotalAmount: (changedValues: any, allValues: any) => void
+  creating: boolean
 }

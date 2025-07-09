@@ -31,9 +31,9 @@ const OrderDetail: React.FC = () => {
       setLoading(true)
       setError(null)
       dispatch(showLoading())
-      const response: AxiosResponse<OrderDetailResponse> = await ordersService.getOrderById(orderId)
+      const response: AxiosResponse<any> = await ordersService.getOrderById(orderId)
       if (response.data) {
-        setOrder(response.data.data)
+        setOrder(response.data)
       } else {
         setError('Order not found')
       }
@@ -51,9 +51,9 @@ const OrderDetail: React.FC = () => {
   }, [])
 
   return (
-    <div className="h-screen overflow-hidden flex flex-row">
+    <div className="h-screen overflow-hidden flex flex-row w-full">
       <SidebarComp sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-      <Layout className="flex-1 flex flex-col">
+      <Layout className="flex-1 flex flex-col w-full">
         <HeaderComp />
         <Content className="flex-1 overflow-y-auto bg-gray-100 p-6">
           {loading && <div className="text-center p-6 text-base text-gray-600">Loading order details...</div>}
