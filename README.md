@@ -29,7 +29,8 @@ User actions:
 - State management (Redux)  
 - REST API integration  
 - Offline-first (local storage)  
-- UI Library (Ant Design)  
+- UI Library (Ant Design)
+- Websocket for realtime order updating 
 
 ---
 
