@@ -57,11 +57,11 @@ const syncWithServer = async ({
     // Process pending actions (e.g., create orders)
     for (const action of pendingActions) {
       if (action.type === 'createOrder') {
-        const { localId, ...orderData } = action.data // Exclude localId from server request
+        const { localId, ...orderData } = action.data
         const response: AxiosResponse<{ order: ListOrders }> = await ordersService.createOrder(orderData)
         if (response.data?.order) {
           const updatedOrders = orders.map((order) =>
-            order.localId === localId ? { ...order, orderId: response.data.order.orderId, localId: undefined } : order
+            order.localId === localId ? { ...order, orderId: response.data.order.id, localId: undefined } : order
           )
           localStorageService.saveOrders(updatedOrders)
           setOrders(updatedOrders)
@@ -87,13 +87,13 @@ const syncWithServer = async ({
       sortOrder: filters.sortOrder || 'DESC',
     })
 
-    const serverOrders = Array.isArray(response.data.data) ? response.data.data : []
+    const serverOrders = Array.isArray(response.data) ? response.data : []
 
     // Merge server and local orders with timestamp-based conflict resolution
     const mergedOrders = [...orders]
     serverOrders.forEach((serverOrder) => {
       const localIndex = mergedOrders.findIndex(
-        (local) => (local.orderId && local.orderId === serverOrder.orderId) || local.localId === serverOrder.localId
+        (local) => (local.id && local.id === serverOrder.id) || local.localId === serverOrder.localId
       )
       if (localIndex === -1) {
         mergedOrders.push(serverOrder)

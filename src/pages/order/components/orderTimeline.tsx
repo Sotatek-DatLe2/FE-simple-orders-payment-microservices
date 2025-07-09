@@ -11,9 +11,9 @@ export const OrderTimeline: React.FC<OrderTimelineProps> = ({ order }) => {
   const timelineItems = order.history
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .map((history) => ({
-      label: history.state.charAt(0).toUpperCase() + history.state.slice(1),
+      label: history.status.charAt(0).toUpperCase() + history.status.slice(1),
       date: new Date(history.createdAt).toLocaleString(),
-      color: getColorByState(history.state),
+      color: getColorByState(history.status),
     }))
 
   return (

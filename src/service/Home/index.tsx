@@ -4,7 +4,6 @@ import { getAuthorizationHeader } from 'src/utils/auth'
 import { API_URL } from 'src/service'
 import { NewOrder } from 'src/types'
 
-const { api } = API_URL
 
 interface GetOrdersParams {
   page?: number
@@ -13,6 +12,7 @@ interface GetOrdersParams {
   endDate?: string
   sortBy?: string
   sortOrder?: string
+  limit?: number
 }
 
 const ordersService = {
@@ -24,7 +24,7 @@ const ordersService = {
     sortBy = '',
     sortOrder = '',
   }: GetOrdersParams): Promise<AxiosResponse> {
-    return get(`${api}/orders/`, {
+    return get(`orders/`, {
       headers: getAuthorizationHeader(),
       params: {
         page,
@@ -38,26 +38,31 @@ const ordersService = {
   },
 
   getOrderById(orderId: string): Promise<AxiosResponse> {
-    return get(`${api}/orders/${orderId}`, {
+    return get(`orders/${orderId}`, {
       headers: getAuthorizationHeader(),
     })
   },
 
   cancelOrder(orderId: string): Promise<AxiosResponse> {
     return put(
-      `${api}/orders/${orderId}/cancel`,
-      {},
+      `orders/${orderId}`,
+      {
+        "status": "cancelled",
+        "reason": "User requested cancellation",
+        "id": orderId,
+      },
       {
         headers: getAuthorizationHeader(),
       }
     )
   },
 
-  async createOrder(orderData: Pick<NewOrder, 'userId' | 'totalAmount'>): Promise<AxiosResponse> {
+  async createOrder(orderData: Pick<NewOrder, 'customerName' | 'totalAmount' | 'paymentDetails' >): Promise<AxiosResponse> {
     const response = await post(
-      `${api}/orders/`,
+      `orders/`,
       {
-        userId: orderData.userId,
+        customerName: orderData.customerName || 'Le Tien Dat',
+        paymentDetails: orderData.paymentDetails,
         totalAmount: orderData.totalAmount,
       },
       {

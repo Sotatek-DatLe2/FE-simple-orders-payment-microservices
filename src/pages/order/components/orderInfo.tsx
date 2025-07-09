@@ -9,12 +9,12 @@ export const OrderInfo: React.FC<{ order: Order }> = ({ order }) => (
 
     <div className="flex justify-between py-2 border-b border-gray-200">
       <span className="font-semibold text-gray-600">Order ID</span>
-      <span className="text-gray-800">{order.orderId}</span>
+      <span className="text-gray-800">{order.id}</span>
     </div>
 
     <div className="flex justify-between py-2 border-b border-gray-200">
-      <span className="font-semibold text-gray-600">User ID</span>
-      <span className="text-gray-800">{order.userId}</span>
+      <span className="font-semibold text-gray-600">Customer</span>
+      <span className="text-gray-800">{order.customerName}</span>
     </div>
 
     <div className="flex justify-between py-2 border-b border-gray-200">
@@ -25,7 +25,7 @@ export const OrderInfo: React.FC<{ order: Order }> = ({ order }) => (
     <div className="flex justify-between py-2 border-b border-gray-200">
       <span className="font-semibold text-gray-600">Status</span>
       <span className="text-gray-800">
-        <Tag color={getColorByState(order.state)}>{order.state}</Tag>
+        <Tag color={getColorByState(order.status)}>{order.status}</Tag>
       </span>
     </div>
 

@@ -110,7 +110,7 @@ export const get = async (url: string, config?: AxiosRequestConfig): Promise<Axi
 
   return axiosClient
     .get(url, _mergeConfig)
-    .then((res) => res)
+    .then((res) => res.data)
     .catch((err) => err.response)
 }
 

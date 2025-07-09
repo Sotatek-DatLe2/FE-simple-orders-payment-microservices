@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Table, Tag, Empty, Modal, Tooltip, notification } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { OrderTableProps } from 'src/types'
-import { InfoCircleTwoTone, DeleteTwoTone, CloseCircleOutlined } from '@ant-design/icons'
+import { InfoCircleTwoTone, CloseCircleOutlined } from '@ant-design/icons'
 import { useCancelOrder } from 'src/hooks/useCancelOrder'
 import { useSocketStatus } from 'src/hooks/useSocketStatus'
 import socket from 'src/socket'
@@ -10,6 +10,7 @@ import socket from 'src/socket'
 const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSuccess }) => {
   const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
   const { mutate: cancelOrder, isPending } = useCancelOrder()
+  console.log('Current orders:', orders)
 
   const resendPendingCancellations = () => {
     const pending = JSON.parse(localStorage.getItem('PENDING_CANCEL_ORDERS') || '[]')
@@ -73,7 +74,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
   const columns: ColumnsType<any> = [
     {
       title: 'Order ID',
-      dataIndex: 'orderId',
+      dataIndex: 'id',
       key: 'orderId',
       sorter: (a, b) => a.orderId.localeCompare(b.orderId),
     },
@@ -86,7 +87,7 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
     },
     {
       title: 'Status',
-      dataIndex: 'state',
+      dataIndex: 'status',
       key: 'state',
       render: (state: string) => {
         const statusMap: { [key: string]: string } = {
@@ -109,16 +110,16 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
       key: 'actions',
       render: (_, record) => (
         <span className="flex items-center align-center gap-2">
-          <a href={`/order/${record.orderId}`}>
+          <a href={`/order/${record.id}`}>
             <Tooltip title="View Details">
               <InfoCircleTwoTone className="text-xl align-top text-blue-500 cursor-pointer hover:text-blue-400" />
             </Tooltip>
           </a>
-          {record.state === 'confirmed' && (
+          {record.status === 'confirmed' && (
             <Tooltip title="Cancel Order">
               <CloseCircleOutlined
                 className="text-xl align-top text-red-500 cursor-pointer hover:text-red-400"
-                onClick={() => setCancelOrderId(record.orderId)}
+                onClick={() => setCancelOrderId(record.id)}
               />
             </Tooltip>
           )}

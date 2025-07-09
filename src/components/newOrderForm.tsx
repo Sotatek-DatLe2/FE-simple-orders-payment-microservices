@@ -1,21 +1,8 @@
 import React from 'react'
 import { Form, Button, InputNumber, Space, Typography, Select } from 'antd'
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons'
-
-interface OrderFormProps {
-  onCancel: () => void
-  handleCreateOrder: () => void
-  form: any
-  calculateTotalAmount: (changedValues: any, allValues: any) => void
-  creating: boolean
-}
-
-const mockProducts = [
-  { productId: 'prod1', name: 'Laptop', price: 999.99 },
-  { productId: 'prod2', name: 'Smartphone', price: 499.99 },
-  { productId: 'prod3', name: 'Headphones', price: 79.99 },
-  { productId: 'prod4', name: 'Mouse', price: 29.99 },
-]
+import { MOCK_PRODUCTS } from 'src/utils/dummy'
+import { OrderFormProps } from 'src/types'
 
 const CreateOrderForm: React.FC<OrderFormProps> = ({
   onCancel,
@@ -50,7 +37,7 @@ const CreateOrderForm: React.FC<OrderFormProps> = ({
                   rules={[{ required: true, message: 'Please select a product' }]}
                 >
                   <Select placeholder="Select Product" style={{ width: 200 }}>
-                    {mockProducts.map((product) => (
+                    {MOCK_PRODUCTS.map((product) => (
                       <Select.Option key={product.productId} value={product.productId}>
                         {product.name} (${product.price.toFixed(2)})
                       </Select.Option>

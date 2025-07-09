@@ -14,13 +14,13 @@ const SidebarComp: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) =>
   const sidebarItems = [
     { name: 'Dashboard', icon: DashboardOutlined, href: '/' },
     { name: 'Profile', icon: TeamOutlined, href: `/user/${userID}` },
-    { name: 'Billing', icon: DollarOutlined, href: '/billing' },
+    { name: 'Product Page', icon: DollarOutlined, href: '/products' },
   ]
 
   return (
     <div
       className={clsx(
-        'hidden md:flex flex-col bg-white h-full shadow-md transition-all duration-300',
+        'hidden md:flex flex-col bg-white h-full shadow-md transition-all duration-300 min-h-screen',
         sidebarOpen ? 'w-60' : 'w-16'
       )}
     >

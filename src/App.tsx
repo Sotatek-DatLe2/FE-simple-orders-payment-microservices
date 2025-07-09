@@ -8,6 +8,7 @@ import rootStore from './stores/root-store'
 import 'antd/dist/reset.css'
 import './App.css'
 import socket from './socket'
+import TitleUpdater from './utils/title'
 
 const queryClient = new QueryClient()
 
@@ -38,6 +39,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <ConfigProvider>
           <BrowserRouter>
+            <TitleUpdater />
             <Routes />
           </BrowserRouter>
         </ConfigProvider>
