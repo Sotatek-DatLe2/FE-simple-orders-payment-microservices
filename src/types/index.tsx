@@ -13,7 +13,7 @@ export interface ListOrders {
 }
 
 export interface OrderHistory {
-  status: string;
+  status: string
   id: string
   orderId: string
   previousState: string | null
@@ -21,9 +21,15 @@ export interface OrderHistory {
 }
 
 export interface PaymentDetails {
-  cardNumber: string;
-  expirationDate: string;
-  cvv: string;
+  cardNumber: string
+  expirationDate: string
+  cvv: string
+}
+
+export interface OrderDisplayTableProps {
+  orders: Order[]
+  loading: boolean
+  onCancelSuccess?: () => void
 }
 
 export interface NewOrder {
@@ -31,10 +37,8 @@ export interface NewOrder {
   totalAmount: number
   paymentDetails: PaymentDetails
   items: { productId: string; quantity: number }[]
-  localId?: string; // Optional for local orders before sync
+  localId?: string // Optional for local orders before sync
 }
-
-
 
 export interface OrderDetailResponse {
   data: {

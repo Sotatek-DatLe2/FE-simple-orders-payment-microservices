@@ -62,7 +62,7 @@ const Home: React.FC = () => {
             onSortChange={(sortBy, sortOrder) => handleFilterChange({ sortBy, sortOrder })}
           />
 
-          <OrderTable orders={orders} loading={isLoading} refresh={false} setRefresh={() => refetch()} />
+          <OrderTable orders={orders} loading={isLoading} />
 
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChangeWithTotal} />
         </Content>

@@ -28,6 +28,11 @@ export default function App() {
       queryClient.invalidateQueries({ queryKey: ['orders'] })
     })
 
+    socket.on('orderDeleted', () => {
+      console.log('Received orderDeleted, invalidating orders...')  
+      queryClient.invalidateQueries({ queryKey: ['orders'] })
+    })
+
     return () => {
       socket.off('connect')
       socket.off('orderUpdated')
