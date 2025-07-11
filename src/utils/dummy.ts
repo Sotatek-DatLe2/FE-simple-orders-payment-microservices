@@ -97,7 +97,7 @@ export const MOCK_CUSTOMER_DATA = {
   customerName: 'Le Tien Dat',
   paymentDetails: {
     cvv: '123',
-    cardNumber: '1234-5678-9012-3456',
+    cardNumber: '1234567890123456',
     expirationDate: '12/25',
   },
 }

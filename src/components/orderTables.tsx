@@ -1,82 +1,34 @@
-import React, { useState } from 'react'
-import { Table, Tag, Empty, Modal, Tooltip, notification } from 'antd'
+import React from 'react'
+import { Table, Empty } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { OrderTableProps } from 'src/types'
-import { InfoCircleTwoTone, CloseCircleOutlined } from '@ant-design/icons'
-import { useCancelOrder } from 'src/hooks/useCancelOrder'
-import { useSocketStatus } from 'src/hooks/useSocketStatus'
-import socket from 'src/socket'
+import { Order, OrderTableProps } from 'src/types/index'
+import { OrderStatusTag } from 'src/components/Order/OrderStatusTag'
+import { OrderActions } from 'src/components/Order/OrderActions'
+import { CancelOrderModal } from 'src/components/Order/CancelOrderModal'
+import { useOrderCancellation } from 'src/hooks/useOrderCancellation'
+import { usePendingCancelOrders } from 'src/hooks/usePendingCancelOrders'
+import { useSocketStatus } from '../hooks/useSocketStatus'
+import { useCancelOrder } from '../hooks/useCancelOrder'
+import { OrderDisplayTableProps } from 'src/types'
 
-const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSuccess }) => {
-  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null)
-  const { mutate: cancelOrder, isPending } = useCancelOrder()
-  console.log('Current orders:', orders)
+const OrderTable: React.FC<OrderDisplayTableProps> = ({ orders, loading, onCancelSuccess }) => {
+  const { isPending } = useCancelOrder()
+  const { resendPendingCancellations } = usePendingCancelOrders(onCancelSuccess)
+  const {
+    cancelOrderId,
+    handleCancelOrder,
+    confirmCancelOrder,
+    cancelCancelOrder,
+  } = useOrderCancellation(onCancelSuccess)
 
-  const resendPendingCancellations = () => {
-    const pending = JSON.parse(localStorage.getItem('PENDING_CANCEL_ORDERS') || '[]')
-    if (pending.length === 0) return
-
-    console.log('Resending pending cancel request...')
-    pending.forEach((orderId: string) => {
-      if (socket.connected) {
-        cancelOrder(orderId, {
-          onSuccess: () => {
-            console.log(`Resent cancel for order ${orderId}`)
-            notification.success({ message: `Order ${orderId} cancelled successfully (resend)` })
-            onCancelSuccess?.()
-          },
-          onError: () => {
-            console.error(`Failed to resend cancel for order ${orderId}`)
-          },
-        })
-      }
-    })
-    localStorage.removeItem('PENDING_CANCEL_ORDERS')
-  }
   useSocketStatus({ onReconnect: resendPendingCancellations })
 
-  const saveCancelOrderLocally = (orderId: string) => {
-    const pending = JSON.parse(localStorage.getItem('PENDING_CANCEL_ORDERS') || '[]')
-    pending.push(orderId)
-    localStorage.setItem('PENDING_CANCEL_ORDERS', JSON.stringify(pending))
-    notification.info({
-      message: `Order ${orderId} cancel saved locally`,
-      description: 'Will cancel when connection is restored.',
-    })
-  }
-
-  const handleOk = () => {
-    if (!cancelOrderId) return
-
-    if (!socket.connected) {
-      saveCancelOrderLocally(cancelOrderId)
-      setCancelOrderId(null)
-      return
-    }
-
-    cancelOrder(cancelOrderId, {
-      onSuccess: () => {
-        notification.success({
-          message: `Order ${cancelOrderId} cancelled successfully`,
-        })
-        setCancelOrderId(null)
-        onCancelSuccess?.()
-      },
-      onError: () => {
-        notification.error({
-          message: 'Failed to cancel order. Please try again.',
-        })
-        setCancelOrderId(null)
-      },
-    })
-  }
-
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<Order> = [
     {
       title: 'Order ID',
       dataIndex: 'id',
       key: 'orderId',
-      sorter: (a, b) => a.orderId.localeCompare(b.orderId),
+      sorter: (a, b) => a.id.localeCompare(b.id),
     },
     {
       title: 'Created At',
@@ -88,15 +40,8 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
     {
       title: 'Status',
       dataIndex: 'status',
-      key: 'state',
-      render: (state: string) => {
-        const statusMap: { [key: string]: string } = {
-          delivered: 'green',
-          cancelled: 'red',
-          confirmed: 'orange',
-        }
-        return <Tag color={statusMap[state] || 'default'}>{state.charAt(0).toUpperCase() + state.slice(1)}</Tag>
-      },
+      key: 'status',
+      render: (status: string) => <OrderStatusTag status={status} />,
     },
     {
       title: 'Total Amount',
@@ -109,50 +54,35 @@ const OrderTable: React.FC<OrderTableProps> = ({ orders, loading, onCancelSucces
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <span className="flex items-center align-center gap-2">
-          <a href={`/order/${record.id}`}>
-            <Tooltip title="View Details">
-              <InfoCircleTwoTone className="text-xl align-top text-blue-500 cursor-pointer hover:text-blue-400" />
-            </Tooltip>
-          </a>
-          {record.status === 'confirmed' && (
-            <Tooltip title="Cancel Order">
-              <CloseCircleOutlined
-                className="text-xl align-top text-red-500 cursor-pointer hover:text-red-400"
-                onClick={() => setCancelOrderId(record.id)}
-              />
-            </Tooltip>
-          )}
-        </span>
+        <OrderActions order={record} onCancelOrder={handleCancelOrder} />
       ),
     },
   ]
+
+  const safeOrders = Array.isArray(orders) ? orders : []
+  const hasOrders = safeOrders.length > 0
 
   return (
     <div className="p-6 relative">
       <Table
         columns={columns}
-        dataSource={Array.isArray(orders) ? orders : []}
+        dataSource={safeOrders}
         rowKey="orderId"
         pagination={false}
         loading={loading || isPending}
       />
-      {(!orders || orders.length === 0) && (
+      
+      {!hasOrders && (
         <div className="text-center py-6">
           <Empty description="No orders found" />
         </div>
       )}
-      <Modal
-        title="Confirm Cancellation"
-        open={!!cancelOrderId}
-        onOk={handleOk}
-        onCancel={() => setCancelOrderId(null)}
-        okText="Yes"
-        okType="danger"
-        cancelText="No"
-      >
-        <p>This action cannot be undone.</p>
-      </Modal>
+      
+      <CancelOrderModal
+        isOpen={!!cancelOrderId}
+        onConfirm={confirmCancelOrder}
+        onCancel={cancelCancelOrder}
+      />
     </div>
   )
 }

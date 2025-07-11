@@ -13,8 +13,10 @@ import { CartStorage } from 'src/utils/cartStorage'
 import { Dispatch } from 'redux'
 import { showLoading, hideLoading } from 'src/stores/loading.store'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 
 export const CartDetailPage: React.FC = () => {
+  const navigate = useNavigate()
   const { cartItems, loading, updateQuantity, removeItem, clearCart } = useCartStorage()
   const [paymentDetails, setPaymentDetails] = useState<PaymentDetails>({
     cardNumber: '',
@@ -44,8 +46,8 @@ export const CartDetailPage: React.FC = () => {
     dispatch(showLoading())
     setIsProcessing(true)
 
-    const orderRequest : NewOrder = {
-      customerName: 'Guest', 
+    const orderRequest: NewOrder = {
+      customerName: 'Guest',
       totalAmount: cartItems.reduce((total, item) => {
         const product = getProductById(item.productId)
         return total + (product ? product.price * item.quantity : 0)
@@ -59,12 +61,16 @@ export const CartDetailPage: React.FC = () => {
 
     createOrder(orderRequest, {
       onSuccess: (id) => {
-        notification.success({
-          message: `Order ${id} created successfully`,
-          description: 'Your order has been placed.',
-        })
-        window.location.href = `/`
         CartStorage.clearCart()
+        navigate('/', {
+          state: {
+            notification: {
+              type: 'success',
+              message: `Order ${id} created successfully`,
+              description: 'Your order has been placed.',
+            },
+          },
+        })
       },
       onError: () => {
         notification.error({
@@ -73,13 +79,16 @@ export const CartDetailPage: React.FC = () => {
         })
       },
     })
+
     dispatch(hideLoading())
     setIsProcessing(false)
   }
 
   const isFormValid = () => {
     return (
-      paymentDetails.cardNumber.length >= 13 && paymentDetails.expirationDate.length === 5 && paymentDetails.cvv.length >= 3
+      paymentDetails.cardNumber.length >= 13 &&
+      paymentDetails.expirationDate.length === 5 &&
+      paymentDetails.cvv.length >= 3
     )
   }
 
@@ -116,10 +125,11 @@ export const CartDetailPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50">
-     <Header />
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <button className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-4"
+          <button
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 mb-4"
             onClick={() => (window.location.href = '/products')}
           >
             <ArrowLeft className="w-4 h-4" />

@@ -9,6 +9,10 @@ interface PendingAction {
   data: NewOrder
 }
 
+export const STORAGE_KEYS = {
+  PENDING_CANCEL_ORDERS: 'PENDING_CANCEL_ORDERS',
+} as const
+
 interface SyncState {
   status: 'idle' | 'syncing' | 'synced' | 'error'
   error?: string
@@ -117,3 +121,24 @@ const syncWithServer = async ({
 }
 
 export { localStorageService, syncWithServer }
+
+export const localStorageUtils = {
+  getPendingCancelOrders: (): string[] => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.PENDING_CANCEL_ORDERS) || '[]')
+    } catch {
+      return []
+    }
+  },
+
+  savePendingCancelOrder: (orderId: string): void => {
+    const pending = localStorageUtils.getPendingCancelOrders()
+    pending.push(orderId)
+    localStorage.setItem(STORAGE_KEYS.PENDING_CANCEL_ORDERS, JSON.stringify(pending))
+  },
+
+  removePendingCancelOrders: (): void => {
+    localStorage.removeItem(STORAGE_KEYS.PENDING_CANCEL_ORDERS)
+  },
+}
+

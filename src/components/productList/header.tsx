@@ -1,4 +1,3 @@
-// components/Header/Header.tsx
 import React from 'react'
 import { ShoppingCart, Search, User, Menu } from 'lucide-react'
 

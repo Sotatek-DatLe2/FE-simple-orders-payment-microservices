@@ -1,9 +1,8 @@
 import { AxiosResponse } from 'axios'
-import { get, post, put } from 'src/service/axiousClient'
+import { get, post, put, deleteReq } from 'src/service/axiousClient'
 import { getAuthorizationHeader } from 'src/utils/auth'
 import { API_URL } from 'src/service'
 import { NewOrder } from 'src/types'
-
 
 interface GetOrdersParams {
   page?: number
@@ -47,9 +46,9 @@ const ordersService = {
     return put(
       `orders/${orderId}`,
       {
-        "status": "cancelled",
-        "reason": "User requested cancellation",
-        "id": orderId,
+        status: 'cancelled',
+        reason: 'User requested cancellation',
+        id: orderId,
       },
       {
         headers: getAuthorizationHeader(),
@@ -57,7 +56,9 @@ const ordersService = {
     )
   },
 
-  async createOrder(orderData: Pick<NewOrder, 'customerName' | 'totalAmount' | 'paymentDetails' >): Promise<AxiosResponse> {
+  async createOrder(
+    orderData: Pick<NewOrder, 'customerName' | 'totalAmount' | 'paymentDetails'>
+  ): Promise<AxiosResponse> {
     const response = await post(
       `orders/`,
       {
@@ -72,6 +73,17 @@ const ordersService = {
 
     if (response.status !== 200 && response.status !== 201) {
       const error = new Error(response.data?.message || 'Order creation failed')
+      throw error
+    }
+
+    return response
+  },
+
+  async deleteOrder(orderId: string): Promise<AxiosResponse> {
+    const response = await deleteReq(`orders/${orderId}`)
+
+    if (response.status !== 200 && response.status !== 204) {
+      const error = new Error(response.data?.message || 'Order deletion failed')
       throw error
     }
 
